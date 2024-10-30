@@ -1,0 +1,39 @@
+name: Build and Push Docker Image to GCR
+
+on:
+  workflow_call:
+    inputs:
+      APPNAME:
+        description: 'Name of the Docker image to push'
+        required: true
+        type: string
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Google Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Build Docker image
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          docker build -t gcr.io/$PROJECT_ID/${{ inputs.APPNAME }}:${{ github.sha }} .
+
+      - name: Push Docker image to GCR
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          docker push gcr.io/$PROJECT_ID/${{ inputs.APPNAME }}:${{ github.sha }}
+
+      - name: Log out from Docker
+        run: docker logout
