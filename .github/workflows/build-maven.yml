@@ -15,7 +15,7 @@ on:
         description: 'Skip tests during Maven build'
         required: false
         default: 'true'
-        type: boolean
+        type: string
 
 jobs:
   build:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          if [ "${{ inputs.skip_tests }}" = "true" ]; then
+          if [ "${{ inputs.SKIPTEST }}" = "true" ]; then
             mvn clean install -DskipTests=true
           else
             mvn clean install
