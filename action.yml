@@ -1,31 +1,18 @@
-name: "Java Build with Cache"
-description: "Custom action to build a Java project with caching"
-author: "Your Name <you@example.com>"
-inputs:
-  java-version:
-    description: "Version of Java to use"
-    required: true
-    default: "17"
-  cache-key:
-    description: "Cache key for dependencies"
-    required: false
-    default: "java-cache"
-
+name: 'Java Build and Test Action'
+description: 'Custom GitHub Action to build Java projects and run tests with cache support'
+author: 'Your Name'
 runs:
-  using: "composite"
-  steps:
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        java-version: ${{ inputs.java-version }}
+  using: 'docker'
+  image: 'Dockerfile'
+inputs:
+  maven_cache_key:
+    description: 'Cache key for Maven dependencies'
+    required: true
+    default: 'maven-dependencies'
+outputs:
+  test_results: 
+    description: 'Result of the test run'
 
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2/repository
-        key: ${{ inputs.cache-key }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ inputs.cache-key }}-
-
-    - name: Build project
-      run: mvn clean install
+branding:
+  icon: 'package'
+  color: 'blue'
