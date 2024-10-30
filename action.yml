@@ -1,0 +1,31 @@
+name: "Java Build with Cache"
+description: "Custom action to build a Java project with caching"
+author: "Your Name <you@example.com>"
+inputs:
+  java-version:
+    description: "Version of Java to use"
+    required: true
+    default: "17"
+  cache-key:
+    description: "Cache key for dependencies"
+    required: false
+    default: "java-cache"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ inputs.java-version }}
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ inputs.cache-key }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ inputs.cache-key }}-
+
+    - name: Build project
+      run: mvn clean install
