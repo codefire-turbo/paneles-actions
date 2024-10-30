@@ -14,7 +14,7 @@ on:
       SKIPTEST:
         description: 'Skip tests during Maven build'
         required: true
-        type: string
+        type: boolean
 
 jobs:
   build:
