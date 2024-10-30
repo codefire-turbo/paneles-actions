@@ -15,6 +15,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        
+      - name: Verify GCP Service Account Key
+        run: |
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "GCP_SA_KEY is empty or not set"
+            exit 1
+          else
+            echo "GCP_SA_KEY is set and has length: ${#secrets.GCP_SA_KEY}"
+          fi
 
       - name: Log in to Google Container Registry
         uses: docker/login-action@v3
