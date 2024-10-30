@@ -54,6 +54,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: List folder structure
+        run: ls -l
+
       - name: Docker build
         run: |
           docker build -t ${{ inputs.APPNAME }}:latest .
