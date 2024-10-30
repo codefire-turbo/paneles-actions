@@ -1,4 +1,4 @@
-name: Reusable Deployment to GKE with Approval for Dev
+name: Reusable Deployment to Google Cloud Run
 
 on:
   workflow_call:
@@ -7,48 +7,74 @@ on:
         description: 'Name of the application for deployment'
         required: true
         type: string
-      GKE_CLUSTER_NAME:
-        description: 'GKE Cluster Name'
+      IMAGE_TAG:
+        description: 'Tag for the Docker image'
         required: true
         type: string
-      GKE_ZONE:
-        description: 'GKE Cluster Zone'
+      REGION:
+        description: 'Google Cloud Run region'
         required: true
         type: string
-      GCP_PROJECT_ID:
-        description: 'Google Cloud Project ID'
-        required: true
+      CPU:
+        description: 'Number of CPUs for each instance'
+        required: false
+        default: '1'
+        type: string
+      MEMORY:
+        description: 'Memory limit for each instance'
+        required: false
+        default: '512Mi'
+        type: string
+      CONCURRENCY:
+        description: 'Concurrency limit per instance'
+        required: false
+        default: '80'
+        type: string
+      MAX_INSTANCES:
+        description: 'Maximum number of instances'
+        required: false
+        default: '10'
+        type: string
+      TIMEOUT:
+        description: 'Timeout for each request'
+        required: false
+        default: '300s'
         type: string
     secrets:
       GCP_SA_KEY:
         required: true
+      GCP_PROJECT_ID:
+        required: true
 
 jobs:
-  approval:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Request Deployment Approval
-        run: echo "Awaiting approval to proceed with deployment to dev environment..."
-        environment:
-          name: dev  # Cambia el entorno de revisión a 'dev'
-          url: https://console.cloud.google.com/kubernetes/deployment/${{ inputs.GKE_CLUSTER_NAME }}
-        # Espera la aprobación manual en el entorno 'dev'
-
   deploy:
     runs-on: ubuntu-latest
-    needs: approval  # Espera la aprobación en 'dev' antes de iniciar
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Set up Google Cloud authentication
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to Cloud Run
         env:
-          GCP_AUTH: ${{ secrets.GCP_SA_KEY }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          echo "$GCP_AUTH" | gcloud auth activate-service-account --key-file=-
-          gcloud config set project ${{ inputs.GCP_PROJECT_ID }}
-          gcloud container clusters get-credentials ${{ inputs.GKE_CLUSTER_NAME }} --zone ${{ inputs.GKE_ZONE }}
-
-      - name: Deploy to GKE
-        run: |
-          kubectl apply -f k8s/deployment.yaml
+          gcloud run deploy ${{ inputs.APPNAME }} \
+            --image gcr.io/$PROJECT_ID/${{ inputs.APPNAME }}:${{ inputs.IMAGE_TAG }} \
+            --platform managed \
+            --region ${{ inputs.REGION }} \
+            --allow-unauthenticated \
+            --cpu ${{ inputs.CPU }} \
+            --memory ${{ inputs.MEMORY }} \
+            --concurrency ${{ inputs.CONCURRENCY }} \
+            --timeout ${{ inputs.TIMEOUT }} \
+            --max-instances ${{ inputs.MAX_INSTANCES }}
