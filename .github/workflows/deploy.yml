@@ -1,0 +1,54 @@
+name: Reusable Deployment to GKE with Approval for Dev
+
+on:
+  workflow_call:
+    inputs:
+      APPNAME:
+        description: 'Name of the application for deployment'
+        required: true
+        type: string
+      GKE_CLUSTER_NAME:
+        description: 'GKE Cluster Name'
+        required: true
+        type: string
+      GKE_ZONE:
+        description: 'GKE Cluster Zone'
+        required: true
+        type: string
+      GCP_PROJECT_ID:
+        description: 'Google Cloud Project ID'
+        required: true
+        type: string
+    secrets:
+      GCP_SA_KEY:
+        required: true
+
+jobs:
+  approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request Deployment Approval
+        run: echo "Awaiting approval to proceed with deployment to dev environment..."
+        environment:
+          name: dev  # Cambia el entorno de revisión a 'dev'
+          url: https://console.cloud.google.com/kubernetes/deployment/${{ inputs.GKE_CLUSTER_NAME }}
+        # Espera la aprobación manual en el entorno 'dev'
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: approval  # Espera la aprobación en 'dev' antes de iniciar
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Google Cloud authentication
+        env:
+          GCP_AUTH: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "$GCP_AUTH" | gcloud auth activate-service-account --key-file=-
+          gcloud config set project ${{ inputs.GCP_PROJECT_ID }}
+          gcloud container clusters get-credentials ${{ inputs.GKE_CLUSTER_NAME }} --zone ${{ inputs.GKE_ZONE }}
+
+      - name: Deploy to GKE
+        run: |
+          kubectl apply -f k8s/deployment.yaml
