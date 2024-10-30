@@ -9,15 +9,6 @@ on:
         type: string
 
 jobs:
-  approval:
-  runs-on: ubuntu-latest
-  permissions:
-    id-token: write
-    contents: read
-  steps:
-    - name: Request Deployment Approval
-      run: echo "Awaiting approval to proceed with build and push..."
-
   build-and-push:
     runs-on: ubuntu-latest
 
