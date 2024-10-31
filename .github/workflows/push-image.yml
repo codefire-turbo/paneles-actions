@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: .
+      ARTIFACT_FOLDER:
+        required: false
+        type: string
+        default: .
 
 jobs:
   build-and-push:
@@ -23,7 +27,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: target
+          name: ${{ inputs.APPNAME }}-artifact
+          path: ${{ inputs.WORKING_DIRECTORY }}/${{ inputs.ARTIFACT_FOLDER }}
 
       - name: Log in to Google Container Registry
         uses: docker/login-action@v3
@@ -37,6 +42,7 @@ jobs:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           docker build -t gcr.io/$PROJECT_ID/${{ inputs.APPNAME }}:${{ github.sha }} .
+        working-directory: ${{ inputs.WORKING_DIRECTORY }}
 
       - name: Push Docker image to GCR
         env:
