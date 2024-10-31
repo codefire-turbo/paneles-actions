@@ -7,6 +7,10 @@ on:
         description: 'Name of the Docker image to push'
         required: true
         type: string
+      WORKING_DIRECTORY:
+        required: false
+        type: string
+        default: .
 
 jobs:
   build-and-push:
@@ -15,6 +19,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set working directory
+        run: cd ${{ inputs.WORKING_DIRECTORY }}
       
       - name: Download artifact
         uses: actions/download-artifact@v4

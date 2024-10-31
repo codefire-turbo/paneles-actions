@@ -40,6 +40,10 @@ on:
         required: false
         default: '300s'
         type: string
+      WORKING_DIRECTORY:
+        required: false
+        type: string
+        default: .
     secrets:
       GCP_SA_KEY:
         required: true
@@ -54,6 +58,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Set working directory
+        run: cd ${{ inputs.WORKING_DIRECTORY }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
